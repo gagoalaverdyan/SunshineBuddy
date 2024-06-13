@@ -1,6 +1,7 @@
 import requests
 import telebot
 from environs import Env
+from telebot import types
 
 from helper_functions import buld_weather_message, emojify
 
@@ -39,8 +40,15 @@ def city_handler(message):
         weather_data = weather_query.json()
         current_state = weather_data["weather"][0]["main"]
 
+        markup = types.InlineKeyboardMarkup()
+        btn1 = types.InlineKeyboardButton("🏞️ Additional", callback_data="additional")
+        btn2 = types.InlineKeyboardButton("🌧️ Precipation", callback_data="precipation")
+        btn3 = types.InlineKeyboardButton("💨 Wind", callback_data="wind")
+        btn4 = types.InlineKeyboardButton("🌤️ Forecast", callback_data="wind")
+        markup.add(btn1, btn2, btn3, btn4)
+
         bot.send_message(message.chat.id, emojify(current_state))
-        bot.send_message(message.chat.id, buld_weather_message(weather_data))
+        bot.send_message(message.chat.id, buld_weather_message(weather_data), reply_markup=markup)
 
 
 bot.polling(none_stop=True)
