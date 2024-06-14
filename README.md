@@ -1,5 +1,5 @@
 # Sunshine Buddy
-Sunshine Buddy is aTelegram bot that provides weather information using the `OpenWeatherMap API`. The bot is built using Python and the `pyTelegramBotAPI` library. (NOT IN PRODUCTION YET)
+Sunshine Buddy is a Telegram bot that provides weather information using the `OpenWeatherMap API`. The bot is built using Python and the `pyTelegramBotAPI` library. (NOT IN PRODUCTION YET)
 
 ## Features
 * Get current weather for any city

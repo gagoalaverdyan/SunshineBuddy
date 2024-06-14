@@ -21,7 +21,7 @@ def emojify(weather_state: str) -> str:
         
 # Turns wind degrees to a wind direction as a word 
 def get_wind_direction(degree: int) -> str:
-    if degree < 0 or degree > 360:
+    if not (0 <= degree <= 360):
         return "Invalid degree"
 
     directions = [
@@ -35,14 +35,12 @@ def get_wind_direction(degree: int) -> str:
     return directions[idx]
 
 # Turns UTC shift in seconds into timezone
-def utc_to_timezone(shift_seconds):
+def utc_to_timezone(shift_seconds: int) -> str:
     hours = abs(shift_seconds // 3600)
     minutes = abs((shift_seconds % 3600) // 60)
     
     sign = '+' if shift_seconds >= 0 else '-'
-    timezone_str = f"UTC{sign}{hours:02d}:{minutes:02d}"
-    
-    return timezone_str
+    return f"UTC{sign}{hours:02d}:{minutes:02d}"
 
 # Builds the current weather response
 def build_weather_message(weather_data: dict) -> str:
@@ -78,10 +76,10 @@ def build_precipitation_message(weather_data: dict) -> str:
         for h, m in weather_data["snow"].items():
             message += f"Last {h}: {m}mm\n"
 
-    if message:
-        return message
-    else:
-        return f"{emojify(weather_data["weather"][0]["main"])} No precipitation currently!\nEnjoy your day 😊"
+    if not message:
+        message = f"{emojify(weather_data['weather'][0]['main'])} No precipitation currently!\nEnjoy your day 😊"
+
+    return message
 
 # Builds the response for wind handler
 def build_wind_message(weather_data: dict) -> str:

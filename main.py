@@ -45,7 +45,9 @@ def city_handler(message):
     }
     weather_query = requests.get(url, params=params)
 
-    if weather_query.status_code == 200:
+    try:
+        weather_query = requests.get(url, params=params)
+        weather_query.raise_for_status()
         weather_data = weather_query.json()
         current_state = weather_data["weather"][0]["main"]
 
@@ -58,11 +60,12 @@ def city_handler(message):
 
         bot.send_message(message.chat.id, emojify(current_state))
         bot.send_message(message.chat.id, build_weather_message(weather_data), reply_markup=markup)
-    else:
+    except:
         bot.send_message(message.chat.id, "🐧")
         bot.send_message(message.chat.id, "Unable to find that city. Try again.")
 
 
+# Handling callback queries
 @bot.callback_query_handler(func=lambda call: True)
 def callback(call):
     if call.data == "precipitation":
@@ -75,4 +78,5 @@ def callback(call):
         bot.send_message(call.message.chat.id, "Forecast info")
 
 
+# Keep the bot running
 bot.polling(none_stop=True)
