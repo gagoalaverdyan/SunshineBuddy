@@ -3,7 +3,8 @@ import telebot
 from environs import Env
 from telebot import types
 
-from helper_functions import (
+from helper.functions import (
+    build_air_quality_message,
     build_precipitation_message,
     build_regional_message,
     build_weather_message,
@@ -43,7 +44,6 @@ def city_handler(message):
         "units": "metric",
         "appid": env.str("WEATHER_API_KEY"),
     }
-    weather_query = requests.get(url, params=params)
 
     try:
         weather_query = requests.get(url, params=params)
@@ -55,8 +55,10 @@ def city_handler(message):
         btn1 = types.InlineKeyboardButton("🌧️ Precipitation", callback_data="precipitation")
         btn2 = types.InlineKeyboardButton("💨 Wind", callback_data="wind")
         btn3 = types.InlineKeyboardButton("🏞️ Regional", callback_data="regional")
-        btn4 = types.InlineKeyboardButton("🌤️ Forecast", callback_data="forecast")
-        markup.add(btn1, btn2, btn3, btn4)
+        btn4 = types.InlineKeyboardButton("🌱 Air Quality", callback_data="aqi")
+        btn5 = types.InlineKeyboardButton("🌤️ Forecast", callback_data="forecast")
+
+        markup.add(btn1, btn2, btn3, btn4, btn5)
 
         bot.send_message(message.chat.id, emojify(current_state))
         bot.send_message(message.chat.id, build_weather_message(weather_data), reply_markup=markup)
@@ -76,6 +78,8 @@ def callback(call):
         bot.send_message(call.message.chat.id, build_regional_message(weather_data))
     elif call.data == "forecast":
         bot.send_message(call.message.chat.id, "Forecast info")
+    elif call.data == "aqi":
+        bot.send_message(call.message.chat.id, build_air_quality_message())
 
 
 # Keep the bot running
