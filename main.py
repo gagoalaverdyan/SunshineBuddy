@@ -5,6 +5,7 @@ from telebot import types
 
 from helper.functions import (
     build_air_quality_message,
+    build_forecast_message,
     build_precipitation_message,
     build_regional_message,
     build_weather_message,
@@ -77,7 +78,7 @@ def callback(call):
     elif call.data == "regional":
         bot.send_message(call.message.chat.id, build_regional_message(weather_data))
     elif call.data == "forecast":
-        bot.send_message(call.message.chat.id, "Forecast info")
+        bot.send_message(call.message.chat.id, build_forecast_message(weather_data))
     elif call.data == "aqi":
         bot.send_message(call.message.chat.id, build_air_quality_message())
 

@@ -1,3 +1,4 @@
+from collections import Counter, defaultdict
 from datetime import datetime
 
 import requests
@@ -7,12 +8,12 @@ from environs import Env
 env = Env()
 env.read_env()
 
-# Global variables4
+# Global variables
 aqi_info = dict()
 
 # Turns weather condition into an emoji
-def emojify(weather_state: str) -> str:
-    match weather_state:
+def emojify(condition: str) -> str:
+    match condition:
         case "Thunderstorm":
             return "⚡"
         case "Drizzle":
@@ -41,6 +42,7 @@ def get_wind_direction(degree: int) -> str:
     ]
 
     idx = round(degree / 22.5) % 16
+
     return directions[idx]
 
 # Turns UTC shift in seconds into timezone
@@ -49,6 +51,7 @@ def utc_to_timezone(shift_seconds: int) -> str:
     minutes = abs((shift_seconds % 3600) // 60)
     
     sign = '+' if shift_seconds >= 0 else '-'
+
     return f"UTC{sign}{hours:02d}:{minutes:02d}"
 
 # Turns AQI Code to air quality state
@@ -93,7 +96,47 @@ def get_aqi(lat: float, lon: float) -> dict:
         "pm10": round(float(aqi_query["list"][0]["components"]["pm10"]), 4),
         "nh3": round(float(aqi_query["list"][0]["components"]["nh3"]), 4),
     }
+
     return aqi_info
+
+# Gets the forecast and turns it into 5-day format
+def get_weather_forecast(lat: float, lon: float) -> list:
+    url = "http://api.openweathermap.org/data/2.5/forecast"
+    params = {
+        "lat": lat,
+        "lon": lon,
+        "units": "metric",
+        "appid": env.str("WEATHER_API_KEY"),
+    }
+    forecast_query = requests.get(url, params=params).json()
+
+    hourly_forecast = defaultdict(list)
+    for forecast in forecast_query["list"]:
+        current_date = datetime.fromtimestamp(forecast["dt"]).date()
+        temperature = forecast["main"]["temp"]
+        condition = forecast["weather"][0]["main"]
+        hourly_forecast[current_date].append((temperature, condition))
+
+    daily_forecast = list()
+    for date, entries in hourly_forecast.items():
+        daily_temperatures = [entry[0] for entry in entries]
+        daily_conditions = [entry[1] for entry in entries]
+
+        avg_temp = sum(daily_temperatures) / len(daily_temperatures)
+        min_temp = min(daily_temperatures)
+        max_temp = max(daily_temperatures)
+
+        average_condition = Counter(daily_conditions).most_common(1)[0][0]
+
+        daily_forecast.append({
+            "date": date,
+            "avg_temp": avg_temp,
+            "min_temp": min_temp,
+            "max_temp": max_temp,
+            "condition": average_condition,
+        })
+
+    return daily_forecast
 
 # Builds the current weather response
 def build_weather_message(weather_data: dict) -> str:
@@ -179,5 +222,18 @@ def build_air_quality_message() -> str:
             continue
         else:
             message += f"{k.upper()}: {v} μg/m3\n"
+
+    return message
+
+# Build the response for forcast handler
+def build_forecast_message(weather_data: dict) -> str:
+    message = ""
+
+    daily_forecast = get_weather_forecast(weather_data["coord"]["lat"], weather_data["coord"]["lon"])
+    for df in daily_forecast:
+        message_line = f"{df["date"].strftime("%a, %d %b")} "
+        message_line += f"- {emojify(df["condition"])} {df["condition"]} "
+        message_line += f"- Avg: {round(df["avg_temp"], 2)}°C, Min: {df["min_temp"]}°C, Max: {df["max_temp"]}°C\n"
+        message += message_line
 
     return message
